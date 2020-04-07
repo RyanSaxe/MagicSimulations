@@ -1,26 +1,24 @@
+import sys
+import os
+sys.path.append(os.path.abspath('src'))
+from modules import Game
 import numpy as np
 
-class Game:
-    def __init__(self,play_flag=True):
-        self.play_flag = play_flag
-        self.make_deck()
-        self.draw_hand()
+class YidaroGame(Game):
+    def __init__(self):
+        super().__init__()
         self.lands = 0
         self.mana = 0
         self.win = 0
         self.ncards = 7
 
-    def make_deck(self):
-        self.deck = np.zeros(60)
-        self.deck[:4] = 1
-        self.shuffle()
-    
-    def shuffle(self):
-        np.random.shuffle(self.deck)
-    
-    def draw_hand(self):
-        self.hand = self.deck[:7]
-        self.deck = self.deck[7:]
+    def build_deck(self):
+        deck = np.zeros(60)
+        deck[:4] = 1
+        return deck
+
+    def mulligan(self):
+        return True
     
     def draw(self):
         drawing = self.deck[0]
@@ -33,7 +31,7 @@ class Game:
         self.ncards += 1
     
     def take_turn(self):
-        if (self.play_flag) and (self.lands == 0):
+        if (self.on_the_play) and (self.lands == 0):
             pass
         else:
             self.draw()       
@@ -75,7 +73,7 @@ n_sims = int(sys.argv[1])
 n_turns = []
 n_cards = []
 for i in range(n_sims):
-    game = Game()
+    game = YidaroGame()
     turns,cards = game.play()
     n_turns.append(turns)
     n_cards.append(cards)
