@@ -33,14 +33,14 @@ class Game:
         self.ncards += 1
     
     def take_turn(self):
-        if self.play_flag and self.lands == 0:
+        if (self.play_flag) and (self.lands == 0):
             pass
         else:
-            self.draw()        
+            self.draw()       
         self.lands += 1
         self.mana = self.lands
-        cyclers = np.where(self.hand == 1)
-        for cycler in cyclers[0]:
+        cyclers = np.where(self.hand == 1)[0]
+        for cycler in cyclers:
             if self.mana >= 2:
                 out = self.cycle(cycler)
                 if out:
@@ -50,6 +50,7 @@ class Game:
         self.win += 1
         if self.win == 4:
             return True
+        self.mana -= 2
         self.hand = np.delete(self.hand,hand_index)
         self.deck = np.insert(
             self.deck,
@@ -58,8 +59,10 @@ class Game:
         )
         self.shuffle()
         self.draw()
-        self.mana -= 2
-        self.ncards += 1
+        #if you draw it off itself
+        if self.hand[0] == 1:
+            if self.mana >= 2:
+                return self.cycle(0)
         return False
         
     def play(self):
