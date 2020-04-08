@@ -5,7 +5,7 @@ from itertools import chain
 import multiprocessing
 
 class Zone:
-    
+
     def __init__(self,init_zone=None):
         self.init_zone = init_zone
         self.reset()
@@ -14,6 +14,9 @@ class Zone:
     def size(self):
         return len(self.zone)
 
+    def __getitem__(self,indexer):
+        return self.zone[indexer]
+
     def reset(self):
         if self.init_zone is None:
             self.zone = np.array([],dtype=np.int8)
@@ -21,6 +24,8 @@ class Zone:
             self.zone = self.init_zone
     
     def move_to(self, new_zone, cur_locations, new_locations=None):
+        if isinstance(cur_locations,(np.integer,int)):
+            cur_locations = [cur_locations]
         if new_locations is None:
             #if no location specified, add to the front
             new_locations = [0] * len(cur_locations) 
@@ -58,6 +63,9 @@ class Deck:
         #need to implement format legality
         return True
 
+    def __getitem__(self,key):
+        return self.map[key]
+
     def build_library(self):
         deck = []
         for name,count in self.cards.items():
@@ -65,6 +73,7 @@ class Deck:
             deck.append([idx] * count)
         deck = list(chain.from_iterable(deck))
         return Zone(init_zone=np.array(deck,dtype=np.int8))
+
 
     def mulligan(self, hand):
         """
@@ -163,13 +172,19 @@ class Simulation:
         **game_kwargs,
     ):
         self.deck = deck_instance
-        self.game = game_class(self.deck,**game_kwargs)
+        self.game_class = game_class
+        self.game_kwargs = game_kwargs
 
     def __call__(self,N=100,processes=4):
-        pool = multiprocessing.Pool(processes)
-        return zip(
-            *pool.map(
-                self.game,
-                range(N),
-            )
-        )
+        # with multiprocessing.Pool(processes) as pool:
+        #     out = pool.map(
+        #         self.simulate,
+        #         range(N),
+        #     )
+        # return out
+        return [self.simulate(i) for i in range(N)]
+    
+    def simulate(self,sim_number):
+        game = self.game_class(self.deck,**self.game_kwargs)
+        return game()
+

@@ -1,81 +1,89 @@
 import sys
 import os
 sys.path.append(os.path.abspath('src'))
-from modules import Game
+from modules import Game, Simulation, Deck
 import numpy as np
 
-class YidaroGame(Game):
-    def __init__(self):
-        super().__init__()
-        self.lands = 0
-        self.mana = 0
-        self.win = 0
-        self.ncards = 7
-
-    def build_deck(self):
-        deck = np.zeros(60)
-        deck[:4] = 1
-        return deck
-
-    def mulligan(self):
-        return True
-    
-    def draw(self):
-        drawing = self.deck[0]
-        self.deck = np.delete(self.deck,0)
-        self.hand = np.insert(
-            self.hand,
-            0,
-            drawing,
+class YidaroDeck(Deck):
+    def __init__(
+        self,
+        cards,
+        mtg_format=None,
+    ):
+        super().__init__(
+            cards, mtg_format=mtg_format
         )
-        self.ncards += 1
+
+    def mulligan(self, hand):
+        #always keep
+        return False
+
+class YidaroGame(Game):
+    def __init__(
+        self,
+        deck,
+        on_the_play=True,
+    ):
+        super().__init__(
+            deck,
+            on_the_play=True,
+        )
+        self.mana = 0
+        self.turns = 0
+        self.cycle_count = 0
     
-    def take_turn(self):
-        if (self.on_the_play) and (self.lands == 0):
+    def turn(self):
+        if (self.on_the_play) and (self.turns == 0):
             pass
         else:
-            self.draw()       
-        self.lands += 1
-        self.mana = self.lands
-        cyclers = np.where(self.hand == 1)[0]
+            self.draw()
+        self.turns += 1
+        self.mana = self.turns
+        cyclers = self.hand.find(self.deck['yidaro'])
         for cycler in cyclers:
             if self.mana >= 2:
                 out = self.cycle(cycler)
                 if out:
                     break
 
+    def terminate_condition(self):
+        return self.cycle_count >= 4
+
+    def summary(self):
+        return self.turns + 6 + 3
+
     def cycle(self,hand_index):
-        self.win += 1
-        if self.win == 4:
+        self.cycle_count += 1
+        if self.cycle_count == 4:
             return True
         self.mana -= 2
-        self.hand = np.delete(self.hand,hand_index)
-        self.deck = np.insert(
-            self.deck,
-            0,
-            1
+        self.hand.move_to(
+            self.library,
+            hand_index
         )
-        self.shuffle()
+        self.library.shuffle()
         self.draw()
         #if you draw it off itself
         if self.hand[0] == 1:
             if self.mana >= 2:
                 return self.cycle(0)
         return False
-        
-    def play(self):
-        while self.win < 4:
-            self.take_turn()
-        return self.lands,self.ncards
 
-import sys
-n_sims = int(sys.argv[1])
-n_turns = []
-n_cards = []
-for i in range(n_sims):
-    game = YidaroGame()
-    turns,cards = game.play()
-    n_turns.append(turns)
-    n_cards.append(cards)
-print("number of turns:",np.average(n_turns))
-print("number of cards:",np.average(n_cards))
+deck = YidaroDeck(
+    {
+        'yidaro':4,
+        'mountain':56,
+    },
+    mtg_format='standard',
+)
+
+sim = Simulation(
+    deck,
+    YidaroGame,
+)
+
+game_summaries = sim(
+    N=10,
+    processes=2,
+)
+print(game_summaries)
