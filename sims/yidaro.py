@@ -31,6 +31,7 @@ class YidaroGame(Game):
         self.mana = 0
         self.turns = 0
         self.cycle_count = 0
+        self.yidaro = self.deck['yidaro']
     
     def turn(self):
         if (self.on_the_play) and (self.turns == 0):
@@ -39,7 +40,7 @@ class YidaroGame(Game):
             self.draw()
         self.turns += 1
         self.mana = self.turns
-        cyclers = self.hand.find(self.deck['yidaro'])
+        cyclers = self.hand.find(self.yidaro)
         for cycler in cyclers:
             if self.mana >= 2:
                 out = self.cycle(cycler)
@@ -50,7 +51,7 @@ class YidaroGame(Game):
         return self.cycle_count >= 4
 
     def summary(self):
-        return self.turns + 6 + 3
+        return self.turns
 
     def cycle(self,hand_index):
         self.cycle_count += 1
@@ -64,7 +65,7 @@ class YidaroGame(Game):
         self.library.shuffle()
         self.draw()
         #if you draw it off itself
-        if self.hand[0] == 1:
+        if self.hand[0] == self.yidaro:
             if self.mana >= 2:
                 return self.cycle(0)
         return False
@@ -77,13 +78,19 @@ deck = YidaroDeck(
     mtg_format='standard',
 )
 
+N,processes = map(int,sys.argv[1:])
+
 sim = Simulation(
     deck,
     YidaroGame,
 )
 
 game_summaries = sim(
-    N=10,
-    processes=2,
+    N=N,
+    processes=processes,
+    debug=False
 )
-print(game_summaries)
+
+num_turns = game_summaries
+result = np.average(num_turns)
+print(f"Average number of turns in {N} simulations: {result}")

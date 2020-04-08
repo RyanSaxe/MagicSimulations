@@ -175,14 +175,18 @@ class Simulation:
         self.game_class = game_class
         self.game_kwargs = game_kwargs
 
-    def __call__(self,N=100,processes=4):
-        # with multiprocessing.Pool(processes) as pool:
-        #     out = pool.map(
-        #         self.simulate,
-        #         range(N),
-        #     )
-        # return out
-        return [self.simulate(i) for i in range(N)]
+    def __call__(self,N=100,processes=4,debug=False):
+        if debug:
+            #don't parallelize for debugging
+            return [
+                self.simulate(i) for i in range(N)
+            ]
+        with multiprocessing.Pool(processes) as pool:
+            out = pool.map(
+                self.simulate,
+                range(N),
+            )
+        return out
     
     def simulate(self,sim_number):
         game = self.game_class(self.deck,**self.game_kwargs)
