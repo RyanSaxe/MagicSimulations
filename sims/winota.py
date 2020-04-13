@@ -5,6 +5,7 @@ from modules import Game, Simulation, Deck
 import mtg_globals
 import numpy as np
 import pdb
+
 class WinotaDeck(Deck):
     def __init__(
         self,
@@ -95,10 +96,13 @@ class WinotaGame(Game):
     
     def turn(self):
         if (self.on_the_play):
-            if self.turn_n != 0:
+            #exclude draw step on turn 4
+            #to simulate drawing winota
+            if self.turn_n not in [0,3]:
                 self.draw()
         else:
-            self.draw()
+            if self.turn_n != 3:
+                self.draw()
         self.turn_n += 1
         lands = self.hand.find(self.land)
         if len(lands) != 0:
@@ -132,7 +136,7 @@ class WinotaGame(Game):
 deck = WinotaDeck(
     {
         'land':16,
-        'human':10,
+        'human':9,
         'nonhuman':8,
         'other':6,
     },
@@ -144,6 +148,7 @@ N,processes = map(int,sys.argv[1:])
 sim = Simulation(
     deck,
     WinotaGame,
+    on_the_play=True,
 )
 
 game_summaries = sim(
