@@ -57,6 +57,7 @@ class Deck:
         self.map = {
             card_name:i for i,card_name in enumerate(self.cards.keys())
         }
+        self.invmap = {v:k for k,v in self.map.items()}
 
     @property
     def is_legal(self):
@@ -73,7 +74,6 @@ class Deck:
             deck.append([idx] * count)
         deck = list(chain.from_iterable(deck))
         return Zone(init_zone=np.array(deck,dtype=np.int8))
-
 
     def mulligan(self, hand):
         """
@@ -96,6 +96,7 @@ class Game:
         self.start()
         while not self.terminate_condition():
             self.turn()
+            #self.print_zone('hand'),self.print_zone('battlefield'),
         return self.summary()
 
     def create_zones(self, deck):
@@ -104,6 +105,12 @@ class Game:
         self.graveyard = Zone()
         self.exile = Zone()
         self.library = deck.build_library()
+
+    def print_zone(self,zone_name):
+        zone = getattr(self,zone_name)
+        print(
+            [self.deck.invmap[x] for x in zone.zone]
+        )
 
     def draw(self,N=1):
         self.library.move_to(
@@ -131,13 +138,13 @@ class Game:
     def start(self):
         self.library.shuffle()
         handsize = mtg_globals.HANDSIZE
-        self.draw(handsize)
-        while self.deck.mulligan(self.hand):
+        self.draw(mtg_globals.HANDSIZE)
+        while self.deck.mulligan(self, handsize):
             handsize -= 1
             self.library.reset()
             self.hand.reset()
             self.library.shuffle()
-            self.draw(handsize)
+            self.draw(mtg_globals.HANDSIZE)
 
     def allowed_to_play(self, card, from_zone, to_zone):
         """

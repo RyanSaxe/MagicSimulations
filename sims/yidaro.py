@@ -14,7 +14,7 @@ class YidaroDeck(Deck):
             cards, mtg_format=mtg_format
         )
 
-    def mulligan(self, hand):
+    def mulligan(self, obj, handsize):
         #always keep
         return False
 

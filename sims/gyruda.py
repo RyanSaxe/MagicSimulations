@@ -14,7 +14,7 @@ class GyrudaDeck(Deck):
             cards, mtg_format=mtg_format
         )
 
-    def mulligan(self, hand):
+    def mulligan(self, obj, handsize):
         #always keep
         return False
 
@@ -61,7 +61,11 @@ class GyrudaGame(Game):
 
 deck = GyrudaDeck(
     {
-        'other':26,
+        'cavern':4,
+        'petal':4,
+        'diamond':4,
+        'sol':8,
+        'tapped_sol':4
         'clone':34,
     },
     mtg_format='legacy',
